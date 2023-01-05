@@ -16,12 +16,19 @@ from __future__ import absolute_import
 
 import hashlib
 import http.client
+import sys
+from functools import partial
 
 from unittest import mock
 import pytest  # type: ignore
 
 from google.resumable_media import _helpers
 from google.resumable_media import common
+
+if sys.version_info[:2] >= (3, 9):
+    _md5 = partial(hashlib.md5, usedforsecurity=False)
+else:
+    _md5 = hashlib.md5
 
 
 def test_do_nothing():
@@ -194,7 +201,7 @@ def test__get_checksum_object(checksum):
     checksum_object = _helpers._get_checksum_object(checksum)
 
     checksum_types = {
-        "md5": type(hashlib.md5()),
+        "md5": type(_md5()),
         "crc32c": type(_helpers._get_crc32c_object()),
         None: type(None),
     }
@@ -308,7 +315,7 @@ class Test__get_expected_checksum(object):
         assert expected_checksum == checksums[checksum]
 
         checksum_types = {
-            "md5": type(hashlib.md5()),
+            "md5": type(_md5()),
             "crc32c": type(_helpers._get_crc32c_object()),
         }
         assert isinstance(checksum_obj, checksum_types[checksum])

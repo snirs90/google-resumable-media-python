@@ -22,6 +22,8 @@ import urllib.parse
 import asyncio
 import mock
 import pytest  # type: ignore
+import sys
+from functools import partial
 
 from google.resumable_media import common
 from google import _async_resumable_media
@@ -43,6 +45,12 @@ BAD_CHUNK_SIZE_MSG = (
     b"to be the exact multiple of 262144).  The received request contained "
     b"1024 bytes, which does not meet this requirement."
 )
+
+
+if sys.version_info[:2] >= (3, 9):
+    _md5 = partial(hashlib.md5, usedforsecurity=False)
+else:
+    _md5 = hashlib.md5
 
 
 @pytest.fixture(scope="session")
@@ -80,7 +88,7 @@ def img_stream():
 
 
 def get_md5(data):
-    hash_obj = hashlib.md5(data)
+    hash_obj = _md5(data)
     return base64.b64encode(hash_obj.digest())
 
 

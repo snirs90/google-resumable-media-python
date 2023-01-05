@@ -21,6 +21,8 @@ import hashlib
 import logging
 import random
 import warnings
+import sys
+from functools import partial
 
 from urllib.parse import parse_qs
 from urllib.parse import urlencode
@@ -48,6 +50,12 @@ No {checksum_type} checksum was returned from the service while downloading {}
 (which happens for composite objects), so client-side content integrity
 checking is not being performed."""
 _LOGGER = logging.getLogger(__name__)
+
+
+if sys.version_info[:2] >= (3, 9):
+    _md5 = partial(hashlib.md5, usedforsecurity=False)
+else:
+    _md5 = hashlib.md5
 
 
 def do_nothing():
@@ -233,7 +241,7 @@ def _get_expected_checksum(response, get_headers, media_url, checksum_type):
             checksum_object = _DoNothingHash()
         else:
             if checksum_type == "md5":
-                checksum_object = hashlib.md5()
+                checksum_object = _md5()
             else:
                 checksum_object = _get_crc32c_object()
     else:
@@ -302,7 +310,7 @@ def _get_checksum_object(checksum_type):
     Raises ValueError if checksum_type is unsupported.
     """
     if checksum_type == "md5":
-        return hashlib.md5()
+        return _md5()
     elif checksum_type == "crc32c":
         return _get_crc32c_object()
     elif checksum_type is None:

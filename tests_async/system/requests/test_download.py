@@ -18,6 +18,8 @@ import hashlib
 import http.client
 import io
 import os
+import sys
+from functools import partial
 
 import asyncio
 from google.auth._default_async import default_async  # type: ignore
@@ -42,6 +44,12 @@ NOT_FOUND_ERR = (
     b"No such object: " + utils.BUCKET_NAME.encode("utf-8") + b"/does-not-exist.txt"
 )
 SIMPLE_DOWNLOADS = (resumable_requests.Download, resumable_requests.RawDownload)
+
+
+if sys.version_info[:2] >= (3, 9):
+    _md5 = partial(hashlib.md5, usedforsecurity=False)
+else:
+    _md5 = hashlib.md5
 
 
 @pytest.fixture(scope="session")
@@ -69,7 +77,7 @@ class CorruptingAuthorizedSession(tr_requests.AuthorizedSession):
             constructor.
     """
 
-    EMPTY_MD5 = base64.b64encode(hashlib.md5(b"").digest()).decode("utf-8")
+    EMPTY_MD5 = base64.b64encode(_md5(b"").digest()).decode("utf-8")
     crc32c = _helpers._get_crc32c_object()
     crc32c.update(b"")
     EMPTY_CRC32C = base64.b64encode(crc32c.digest()).decode("utf-8")

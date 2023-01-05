@@ -18,9 +18,12 @@ import http.client
 import io
 import os
 import urllib.parse
+import sys
+from functools import partial
 
 import pytest  # type: ignore
 from unittest import mock
+
 
 from google.resumable_media import common
 from google import resumable_media
@@ -44,6 +47,11 @@ BAD_CHUNK_SIZE_MSG = (
     b"1024 bytes, which does not meet this requirement."
 )
 
+
+if sys.version_info[:2] >= (3, 9):
+    _md5 = partial(hashlib.md5, usedforsecurity=False)
+else:
+    _md5 = hashlib.md5
 
 @pytest.fixture
 def cleanup():
@@ -72,7 +80,7 @@ def img_stream():
 
 
 def get_md5(data):
-    hash_obj = hashlib.md5(data)
+    hash_obj = _md5(data)
     return base64.b64encode(hash_obj.digest())
 
 

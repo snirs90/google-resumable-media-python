@@ -18,6 +18,8 @@ import hashlib
 import http.client
 import io
 import os
+import sys
+from functools import partial
 
 import google.auth  # type: ignore
 import google.auth.transport.requests as tr_requests  # type: ignore
@@ -43,6 +45,11 @@ NOT_FOUND_ERR = (
 SIMPLE_DOWNLOADS = (resumable_requests.Download, resumable_requests.RawDownload)
 
 
+if sys.version_info[:2] >= (3, 9):
+    _md5 = partial(hashlib.md5, usedforsecurity=False)
+else:
+    _md5 = hashlib.md5
+
 class CorruptingAuthorizedSession(tr_requests.AuthorizedSession):
     """A Requests Session class with credentials, which corrupts responses.
 
@@ -60,7 +67,7 @@ class CorruptingAuthorizedSession(tr_requests.AuthorizedSession):
             constructor.
     """
 
-    EMPTY_MD5 = base64.b64encode(hashlib.md5(b"").digest()).decode("utf-8")
+    EMPTY_MD5 = base64.b64encode(_md5(b"").digest()).decode("utf-8")
     crc32c = _helpers._get_crc32c_object()
     crc32c.update(b"")
     EMPTY_CRC32C = base64.b64encode(crc32c.digest()).decode("utf-8")
